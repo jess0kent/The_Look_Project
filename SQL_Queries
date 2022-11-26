@@ -1,0 +1,158 @@
+--Start Off Exploring Data sets:
+ 
+-- How many orders does each user_id have?
+SELECT user_id, SUM(num_of_item) as Order_Total
+FROM `bigquery-public-data.thelook_ecommerce.orders` 
+GROUP BY user_id
+ORDER BY 1,2
+
+
+-- How many of the total items ordered come from each gender?
+SELECT gender, SUM(num_of_item) as Total_items_ordered
+FROM `bigquery-public-data.thelook_ecommerce.orders` 
+GROUP BY gender
+ 
+ 
+-- How many of the total orders come from each gender?
+SELECT gender, COUNT(gender) as Total_Ordered_PerGender
+FROM `bigquery-public-data.thelook_ecommerce.orders` 
+GROUP BY gender
+ 
+ 
+--Where are customers ending their visit to the website at?
+SELECT event_type, COUNT(event_type) as how_many
+FROM `bigquery-public-data.thelook_ecommerce.events`
+GROUP BY event_type
+ 
+ 
+--Where are the most orders coming from? Are there any emerging markets more recently we should be aware of?
+ 
+-- Joining the orders and events tables together
+SELECT *
+FROM `bigquery-public-data.thelook_ecommerce.events` as event
+JOIN `bigquery-public-data.thelook_ecommerce.orders` as orders
+  ON event.user_id = orders.user_id
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+-- Cleaning up the table to answer my questions
+SELECT event.user_id, city, state, postal_code, traffic_source, event_type, status, gender, num_of_item
+FROM `bigquery-public-data.thelook_ecommerce.events` as event
+JOIN `bigquery-public-data.thelook_ecommerce.orders` as orders
+  ON event.user_id = orders.user_id
+ 
+ 
+ 
+-- Seeing if using a postal code vs. a city makes more sense
+SELECT postal_code, COUNT(postal_code) as Total_Per_Postal_Code 
+FROM `bigquery-public-data.thelook_ecommerce.events` as event
+JOIN `bigquery-public-data.thelook_ecommerce.orders` as orders
+  ON event.user_id = orders.user_id
+GROUP BY postal_code
+ORDER BY Total_Per_Postal_Code desc
+ 
+ 
+--Which cities should we consider emerging markets? Overall 
+SELECT event.city, COUNT(event.city) as Orders_Per_City
+FROM `bigquery-public-data.thelook_ecommerce.events` as event
+JOIN `bigquery-public-data.thelook_ecommerce.orders` as orders
+  ON event.user_id = orders.user_id
+WHERE city is not null   
+GROUP BY event.city
+ORDER BY Orders_Per_City desc
+ 
+ 
+--Which cities should we consider emerging markets? Top 25 cities
+SELECT 
+event.city, COUNT(event.city) as Orders_Per_City
+FROM `bigquery-public-data.thelook_ecommerce.events` as event
+JOIN `bigquery-public-data.thelook_ecommerce.orders` as orders
+  ON event.user_id = orders.user_id
+WHERE city != “null” 
+GROUP BY event.city
+ORDER BY Orders_Per_City desc
+LIMIT 25
+ 
+ 
+ 
+--Found null city name in other query, added event as purchase
+SELECT 
+event.city, COUNT(event.city) as Orders_Per_City
+FROM `bigquery-public-data.thelook_ecommerce.events` as event
+JOIN `bigquery-public-data.thelook_ecommerce.orders` as orders
+  ON event.user_id = orders.user_id
+WHERE city != "null" 
+  AND event.event_type = "purchase"
+GROUP BY event.city
+ORDER BY Orders_Per_City desc
+LIMIT 25
+ 
+ 
+--Overall cities that order the most
+SELECT 
+event.city, COUNT(event.city) as Orders_Per_City
+FROM `bigquery-public-data.thelook_ecommerce.events` as event
+JOIN `bigquery-public-data.thelook_ecommerce.orders` as orders
+  ON event.user_id = orders.user_id
+WHERE city != "null" 
+  AND event.event_type = "purchase"
+GROUP BY event.city
+ORDER BY Orders_Per_City desc
+ 
+ 
+ 
+--Just wanted to see if there is a relationship between the number of orders and number of returns?
+ 
+-- How many returns overall?? 
+SELECT COUNT(returned_at) as How_Many_Returns
+FROM `bigquery-public-data.thelook_ecommerce.orders` 
+WHERE returned_at is not null
+ 
+--Overall cities that have the most returns
+SELECT 
+event.city, COUNT(orders.returned_at) as Num_Of_Returns
+FROM `bigquery-public-data.thelook_ecommerce.events` as event
+JOIN `bigquery-public-data.thelook_ecommerce.orders` as orders
+  ON event.user_id = orders.user_id
+WHERE city != "null"
+GROUP BY event.city
+ORDER BY Num_Of_Returns desc
+ 
+ 
+--What percent of customers are male and what percent female? What percent of our departments are male and what percent of our departments are female? Are these numbers close enough to each other? Is there a product we can lean in to more in sales? 
+ 
+--How many departments do we have? How many skus in each?
+SELECT  DISTINCT(product_category), COUNT(product_department) as Total_Skus
+FROM `bigquery-public-data.thelook_ecommerce.inventory_items` 
+GROUP BY product_category
+ 
+--How many departments do Men have? How many skus?
+SELECT  DISTINCT(product_category), COUNT(product_department) as Total_Skus
+FROM `bigquery-public-data.thelook_ecommerce.inventory_items` 
+WHERE product_department = "Men"
+GROUP BY product_category
+ 
+--How many departments do Women have? How many skus?
+SELECT  DISTINCT(product_category), COUNT(product_department) as Total_Skus
+FROM `bigquery-public-data.thelook_ecommerce.inventory_items` 
+WHERE product_department = "Women"
+GROUP BY product_category
+ 
+--How many departments do Women have? What's within each department and how much is the average profit margin?
+SELECT  DISTINCT(product_category), COUNT(product_department) as Total_Skus, AVG(product_retail_price) as Average_Retail_Price, AVG(cost) as Cost_to_Make, AVG(product_retail_price) - AVG(cost) as average_profit_margin
+FROM `bigquery-public-data.thelook_ecommerce.inventory_items` 
+WHERE product_department = "Women"
+GROUP BY product_category
+ORDER BY average_profit_margin desc
+ 
+ 
+--Did the same for Mens
+SELECT  DISTINCT(product_category), COUNT(product_department) as Total_Skus, AVG(product_retail_price) as Average_Retail_Price, AVG(cost) as Cost_to_Make, AVG(product_retail_price) - AVG(cost) as average_profit_margin
+FROM `bigquery-public-data.thelook_ecommerce.inventory_items` 
+WHERE product_department = "Men"
+GROUP BY product_category
+ORDER BY average_profit_margin desc
