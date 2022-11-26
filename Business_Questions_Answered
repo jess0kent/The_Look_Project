@@ -1,0 +1,110 @@
+What departments are most profitable
+Men’s
+SELECT  DISTINCT(product_category), COUNT(product_department) as Total_Skus, AVG(product_retail_price) as Average_Retail_Price, AVG(cost) as Cost_to_Make, AVG(product_retail_price) - AVG(cost) as average_profit_margin
+FROM `bigquery-public-data.thelook_ecommerce.inventory_items` 
+WHERE product_department = "Men"
+GROUP BY product_category
+ORDER BY average_profit_margin desc
+
+Women’s
+SELECT  DISTINCT(product_category), COUNT(product_department) as Total_Skus, AVG(product_retail_price) as Average_Retail_Price, AVG(cost) as Cost_to_Make, AVG(product_retail_price) - AVG(cost) as average_profit_margin
+FROM `bigquery-public-data.thelook_ecommerce.inventory_items` 
+WHERE product_department = "Women"
+GROUP BY product_category
+ORDER BY average_profit_margin desc
+ 
+OVERALL
+SELECT  DISTINCT(product_category), COUNT(product_department) as Total_Skus, AVG(product_retail_price) as Average_Retail_Price, AVG(cost) as Cost_to_Make, AVG(product_retail_price) - AVG(cost) as average_profit_margin
+FROM `bigquery-public-data.thelook_ecommerce.inventory_items` 
+GROUP BY product_category
+ORDER BY average_profit_margin desc
+
+
+Are men’s or women’s styles more profitable (on average)
+SELECT product_department, AVG(product_retail_price) - AVG(cost) as average_profit_margin
+FROM `bigquery-public-data.thelook_ecommerce.inventory_items` 
+GROUP BY product_department
+ORDER BY average_profit_margin desc
+
+
+How much of our inventory is men’s vs. women’s
+SELECT product_department, COUNT(product_department) AS items_total_in_departments
+ FROM `bigquery-public-data.thelook_ecommerce.inventory_items` 
+ GROUP BY product_department
+ 
+ 
+Are men or women ordering more
+SELECT users.gender, events.event_type, COUNT(events.event_type) as total_purchased
+FROM `bigquery-public-data.thelook_ecommerce.events` as events
+JOIN `bigquery-public-data.thelook_ecommerce.users` as users
+ON events.user_id = users.id
+WHERE events.event_type = "purchase"
+GROUP BY users.gender, events.event_type
+ 
+**Checked with**
+SELECT event_type, COUNT(event_type) as how_many
+FROM `bigquery-public-data.thelook_ecommerce.events`
+WHERE event_type = "purchase"
+GROUP BY event_type
+
+
+Who orders the most items per order on average
+-- Finding out average items per order by gender, Women
+SELECT gender, num_of_item AS items_per_order, COUNT(num_of_item) AS times_occured
+FROM `bigquery-public-data.thelook_ecommerce.orders` 
+WHERE gender = "F"
+GROUP BY gender, num_of_item
+ORDER BY 1, 2
+ 
+--Finding the average items per order, by gender, Women
+SELECT gender, AVG(num_of_item) as average_items_per_order
+FROM `bigquery-public-data.thelook_ecommerce.orders`
+WHERE gender = "F"
+GROUP BY gender
+
+-- Finding out average items per order by gender, Men
+SELECT gender, num_of_item AS items_per_order, COUNT(num_of_item) AS times_occured
+FROM `bigquery-public-data.thelook_ecommerce.orders` 
+WHERE gender = "M"
+GROUP BY gender, num_of_item
+ORDER BY 1, 2
+
+--Finding the average items per order, by gender, Men
+SELECT gender, AVG(num_of_item) as average_items_per_order
+FROM `bigquery-public-data.thelook_ecommerce.orders`
+WHERE gender = "M"
+GROUP BY gender
+
+
+What are the top 25 cities placing orders
+SELECT 
+event.city, COUNT(event.city) as Orders_Per_City
+FROM `bigquery-public-data.thelook_ecommerce.events` as event
+JOIN `bigquery-public-data.thelook_ecommerce.orders` as orders
+  ON event.user_id = orders.user_id
+WHERE city != "null" 
+  AND event.event_type = "purchase"
+GROUP BY event.city
+ORDER BY Orders_Per_City desc
+LIMIT 25
+
+
+How are people reaching the website the most
+SELECT traffic_source, COUNT(traffic_source) AS times_reached_by
+FROM `bigquery-public-data.thelook_ecommerce.events`
+GROUP BY traffic_source
+ORDER BY times_reached_by DESC
+
+
+Who are the top 50 purchasers from the website, how did they reach it
+SELECT  orders.user_id, users.first_name, users.last_name, COUNT(orders.user_id) as orders_placed, event_type, events.traffic_source
+FROM `bigquery-public-data.thelook_ecommerce.orders` as orders
+JOIN `bigquery-public-data.thelook_ecommerce.events` as events
+ON orders.user_id = events.user_id
+JOIN `bigquery-public-data.thelook_ecommerce.users` as users
+ON orders.user_id = users.id
+WHERE event_type = "purchase"
+GROUP BY orders.user_id, users.first_name, users.last_name, event_type, events.traffic_source
+ORDER BY orders_placed DESC
+LIMIT 50
+
